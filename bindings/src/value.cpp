@@ -503,8 +503,22 @@ void Converter::to(std::string &str, const Value &val) const
       break;
     }
     case MYSQL_TYPE_NEWDECIMAL:
-      str= "not implemented";
+    {
+      char s[200];
+      int len = sizeof(s) - 1;
+
+      decimal_digit_t buff[10];
+      decimal_t dec;
+      dec.buf = buff;
+      dec.len = 10;
+
+      bin2decimal(val.storage(), &dec, val.metadata() >> 8, val.metadata() & 0xFF);
+      decimal2string(&dec, s, &len, 0,0,0);
+
+      s[len] = 0;
+      str = std::string(s);
       break;
+    }
     case MYSQL_TYPE_ENUM:
     switch (val.metadata() & 0xFF) {
     case 1:
