@@ -106,7 +106,7 @@ public:
   /**
     Adds content handlers to the list
   */
-  bool add_listener(Content_handler& handler)
+  void add_listener(Content_handler& handler)
   {
     m_content_handlers.push_back(&handler);
   }

@@ -82,6 +82,8 @@ public:
     return 1;
   }
 
+  virtual int set_server_id(int server_id) { return server_id; }
+
   virtual int set_position(const std::string &str, unsigned long position)
   {
     return ERR_OK;
@@ -162,6 +164,8 @@ public:
    * @return The current binlog file position
    */
   unsigned long get_position(std::string &filename);
+
+  int set_server_id(int server_id);
 
   /**
    * Returns size of the binary log file.

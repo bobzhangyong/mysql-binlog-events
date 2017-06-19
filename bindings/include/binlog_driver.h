@@ -84,6 +84,8 @@ public:
 
   virtual int disconnect()= 0;
 
+  virtual int set_server_id(int server_id) = 0;
+
   /**
     Blocking attempt to get the next event buffer
     @param   buffer_buflen  It stores the buffer and the buffer_len in a C++ pair

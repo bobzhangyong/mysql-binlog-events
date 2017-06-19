@@ -91,7 +91,7 @@ int Binlog_tcp_driver::connect(const std::string& user,
   if (!m_mysql)
     return ERR_FAIL;
 
-  int err= sync_connect_and_authenticate(m_mysql, user, passwd, host, port, offset);
+  int err= sync_connect_and_authenticate(m_mysql, user, passwd, host, port, m_server_id, offset);
   if (err != ERR_OK)
     return err;
 
@@ -118,7 +118,7 @@ int Binlog_tcp_driver::connect(const std::string& user,
 int sync_connect_and_authenticate(MYSQL *conn, const std::string &user,
                                   const std::string &passwd,
                                   const std::string &host, uint port,
-                                  long offset)
+                                  int server_id, long offset)
 {
 
   ushort binlog_flags= 0;
@@ -126,7 +126,6 @@ int sync_connect_and_authenticate(MYSQL *conn, const std::string &user,
   uchar *pos= buf;
   /* So that mysql_real_connect use TCP_IP_PROTOCOL. */
   mysql_unix_port=0;
-  int server_id= 1;
   MYSQL_RES* res = 0;
   MYSQL_ROW row;
   const char* checksum;
@@ -198,12 +197,11 @@ void Binlog_tcp_driver::start_binlog_dump(const char *binlog_name,
 {
   uchar buf[1024];
   ushort binlog_flags= 0;
-  int server_id= 1;
   size_t binlog_name_length;
   m_mysql->status= MYSQL_STATUS_READY;
   int4store(buf, long(offset));
   int2store(buf + 4, binlog_flags);
-  int4store(buf + 6, server_id);
+  int4store(buf + 6, m_server_id);
   binlog_name_length= strlen(binlog_name);
   memcpy(buf + 10, binlog_name, binlog_name_length);
   simple_command(m_mysql, COM_BINLOG_DUMP, buf, binlog_name_length + 10, 1);
@@ -268,7 +266,7 @@ int Binlog_tcp_driver::set_position(const std::string &str, unsigned long positi
   MYSQL *mysql= mysql_init(NULL);
   if (!mysql)
     return ERR_FAIL;
-  int err= sync_connect_and_authenticate(mysql, m_user, m_passwd, m_host, m_port);
+  int err= sync_connect_and_authenticate(mysql, m_user, m_passwd, m_host, m_port, m_server_id);
   if (err != ERR_OK)
     return err;
 
@@ -295,7 +293,7 @@ int Binlog_tcp_driver::get_position(std::string *filename_ptr,
   MYSQL *mysql= mysql_init(NULL);
   if (!mysql)
     return ERR_FAIL;
-  int err= sync_connect_and_authenticate(mysql, m_user, m_passwd, m_host, m_port);
+  int err= sync_connect_and_authenticate(mysql, m_user, m_passwd, m_host, m_port, m_server_id);
   if (err != ERR_OK)
     return err;
 
@@ -309,6 +307,16 @@ int Binlog_tcp_driver::get_position(std::string *filename_ptr,
     *position_ptr= m_binlog_offset;
   return ERR_OK;
 }
+
+int Binlog_tcp_driver::set_server_id(int server_id) {
+  if (server_id < 1) {
+    srand((unsigned int) (time(NULL)));
+    server_id = rand() % 10000 + 10000;
+  }
+  m_server_id = server_id;
+  return m_server_id;
+}
+
 bool fetch_master_status(MYSQL *mysql, std::string *filename,
                          unsigned long *position)
 {
@@ -331,7 +339,7 @@ size_t Binlog_tcp_driver::file_size() const
   if (!mysql)
     return ERR_FAIL;
   if (int err= sync_connect_and_authenticate(mysql, m_user, m_passwd,
-                                             m_host, m_port) != ERR_OK)
+                                             m_host, m_port, m_server_id) != ERR_OK)
     return err;
   std::map<std::string, unsigned long> mp;
   std::map<std::string, unsigned long>::iterator it;

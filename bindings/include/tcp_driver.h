@@ -42,9 +42,9 @@ class Binlog_tcp_driver : public Binary_log_driver
 public:
 
     Binlog_tcp_driver(const std::string& user, const std::string& passwd,
-                      const std::string& host, uint port)
+                      const std::string& host, uint port, int server_id = 1)
     : Binary_log_driver("", 4), m_user(user), m_passwd(passwd), m_host(host),
-      m_port(port), m_shutdown(false), m_total_bytes_transferred(0)
+      m_port(port), m_shutdown(false), m_total_bytes_transferred(0), m_server_id(server_id)
     {
     }
 
@@ -84,6 +84,8 @@ public:
     */
     int get_next_event(std::pair<unsigned char *, size_t> *buffer_buflen);
 
+    int set_server_id(int server_id);
+
     /**
      * Get the file size of Binary Log file.
      * @retval   Size of file
@@ -93,6 +95,7 @@ public:
     const std::string& user() const { return m_user; }
     const std::string& password() const { return m_passwd; }
     const std::string& host() const { return m_host; }
+
     uint port() const { return m_port; }
 
 protected:
@@ -164,6 +167,7 @@ private:
 
     MYSQL *m_mysql;
     uint64_t m_total_bytes_transferred;
+    int m_server_id;
 };
 
 /**
@@ -180,7 +184,7 @@ bool fetch_binlog_name_and_size(MYSQL *mysql, std::map<std::string, unsigned lon
 int sync_connect_and_authenticate(MYSQL *mysql, const std::string &user,
                                   const std::string &passwd,
                                   const std::string &host, uint port,
-                                  long offset= 4);
+                                  int server_id = 1, long offset= 4);
 } }
 
 

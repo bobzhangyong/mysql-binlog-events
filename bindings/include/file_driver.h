@@ -53,6 +53,7 @@ public:
 
     int connect();
     int disconnect();
+    int set_server_id(int server_id);
     int set_position(const std::string &str, unsigned long position);
     int get_position(std::string *str, unsigned long *position);
     int connect(const std::string &filename, unsigned long offset);
